@@ -1,0 +1,68 @@
+name: "Container Security Scan"
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  container-security-scan:
+    runs-on: ubuntu-latest
+    name: Scan Container Image for Vulnerabilities
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker Image
+      run: docker build -t juice-shop:latest .
+    
+    - name: Run Trivy Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'juice-shop:latest'
+        format: 'json'
+        output: 'trivy-report.json'
+        severity: 'CRITICAL,HIGH'
+    
+    - name: Run Trivy Scan (SARIF for GitHub)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'juice-shop:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload to Security Tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Generate HTML Report
+      run: |
+        docker run --rm -v $(pwd):/output aquasec/trivy image \
+          --format template --template "@contrib/html.tpl" \
+          -o /output/trivy-report.html \
+          --severity CRITICAL,HIGH \
+          juice-shop:latest || true
+    
+    - name: Upload JSON Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-json-report
+        path: trivy-report.json
+        retention-days: 30
+    
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-html-report
+        path: trivy-report.html
+        retention-days: 30
