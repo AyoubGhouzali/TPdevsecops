@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+  issues: write          # Ajouter cette ligne
+  security-events: write
+
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
