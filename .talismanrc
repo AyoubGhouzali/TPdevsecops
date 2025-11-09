@@ -1,0 +1,4 @@
+fileignoreconfig:
+- filename: .github/workflows/trivy-scan.yml
+  checksum: d7eaceadb88602e920445c9c5dfe972f0e84149b667e57693538f0a44e813add
+version: "1.0"
