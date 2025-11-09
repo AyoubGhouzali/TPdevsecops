@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  issues: write          # Ajouter cette ligne
+  issues: write
   security-events: write
 
 jobs:
@@ -29,14 +29,12 @@ jobs:
       run: npm install
     
     - name: Start Application
-      run: |
-        npm start &
-        echo $! > app.pid
+      run: npm start &
     
     - name: Wait for Application
       run: |
         timeout 60 bash -c 'until curl -s http://localhost:3000; do sleep 2; done'
-        echo "Application is ready!"
+        echo "Application ready!"
     
     - name: ZAP Baseline Scan
       uses: zaproxy/action-baseline@v0.12.0
@@ -46,17 +44,10 @@ jobs:
         rules_file_name: '.zap/rules.tsv'
         cmd_options: '-a -j'
     
-    - name: Stop Application
-      if: always()
-      run: |
-        if [ -f app.pid ]; then
-          kill $(cat app.pid) || true
-        fi
-    
     - name: Upload ZAP Report
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: zap-scan-report
+        name: zap-scan-report       # ✅ Utiliser des tirets
         path: report_html.html
         retention-days: 30
